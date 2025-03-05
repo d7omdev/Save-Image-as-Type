@@ -218,18 +218,19 @@ async function processImageSave(srcUrl, type, tab, info) {
     const noChange = srcUrl.startsWith(`image/${type === 'jpg' ? 'jpeg' : type};`);
 
     try {
-        if (browser.offscreen) {
-            fetchAsDataURL(srcUrl, async (error, dataurl) => {
-                if (error) {
-                    notify({ error, srcUrl });
-                    return;
-                }
+        fetchAsDataURL(srcUrl, async (error, dataurl) => {
+            if (error) {
+                notify({ error, srcUrl });
+                return;
+            }
 
-                if (noChange) {
-                    download(dataurl, filename);
-                    return;
-                }
+            if (noChange) {
+                download(dataurl, filename);
+                return;
+            }
 
+            // Check if offscreen API is available
+            if (browser.offscreen && browser.offscreen.createDocument) {
                 const offscreenSrc = 'offscreen.html';
                 if (!(await hasOffscreenDocument(offscreenSrc))) {
                     await browser.offscreen.createDocument({
@@ -246,20 +247,14 @@ async function processImageSave(srcUrl, type, tab, info) {
                     type,
                     filename
                 });
-            });
-        } else {
-            const frameIds = info.frameId ? [info.frameId] : undefined;
+            } else {
+                // Fallback to content script approach
+                const frameIds = info.frameId ? [info.frameId] : undefined;
 
-            await browser.scripting.executeScript({
-                target: { tabId: tab.id, frameIds },
-                files: ["offscreen.js"],
-            });
-
-            fetchAsDataURL(srcUrl, async (error, dataurl) => {
-                if (error) {
-                    notify({ error, srcUrl });
-                    return;
-                }
+                await browser.scripting.executeScript({
+                    target: { tabId: tab.id, frameIds },
+                    files: ["src/offscreen.js"],
+                });
 
                 const port = connectTab(tab, info.frameId);
                 await port.postMessage({
@@ -269,8 +264,8 @@ async function processImageSave(srcUrl, type, tab, info) {
                     type,
                     filename
                 });
-            });
-        }
+            }
+        });
     } catch (error) {
         notify({ error: error.message || 'Unknown error', srcUrl });
     }
