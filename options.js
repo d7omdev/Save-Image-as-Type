@@ -2,36 +2,27 @@
 function saveOptions(e) {
     e.preventDefault();
     browser.storage.sync.set({
-        defaultType: document.getElementById('defaultType').value,
-        defaultLocation: document.getElementById('defaultLocation').value
+        defaultType: document.getElementById('defaultType').value
     }).then(() => {
-        // Update status to let user know options were saved
         const status = document.getElementById('status');
         status.classList.add('visible');
-        setTimeout(() => {
-            status.classList.remove('visible');
-        }, 2000);
+        setTimeout(() => status.classList.remove('visible'), 2000);
     });
 }
 
-// Restores preferences stored in browser.storage
+// Restores preferences
 function restoreOptions() {
     browser.storage.sync.get({
-        defaultType: '',
-        defaultLocation: ''
+        defaultType: ''
     }).then((items) => {
         document.getElementById('defaultType').value = items.defaultType;
-        document.getElementById('defaultLocation').value = items.defaultLocation;
     });
 }
 
-// Reset options to defaults
+// Reset options
 function resetOptions(e) {
     e.preventDefault();
-
     document.getElementById('defaultType').value = '';
-    document.getElementById('defaultLocation').value = '';
-
     saveOptions(e);
 }
 

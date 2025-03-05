@@ -19,7 +19,6 @@ if (!browser.i18n?.getMessage) {
 function loadUserPreferences() {
     return browser.storage.sync.get({
         defaultType: '',
-        defaultLocation: ''
     }).then(items => {
         userPreferences = items;
         updateContextMenus();
@@ -27,22 +26,10 @@ function loadUserPreferences() {
 }
 
 function download(url, filename) {
-    const downloadOptions = { url, saveAs: true };
-
-    if (userPreferences.defaultLocation) {
-        downloadOptions.filename = `${userPreferences.defaultLocation}/${filename}`;
-    } else {
-        downloadOptions.filename = filename;
-    }
-
-    browser.downloads.download(downloadOptions, downloadId => {
-        if (!downloadId) {
-            let msg = browser.i18n.getMessage('errorOnSaving');
-            if (browser.runtime.lastError) {
-                msg += `: \n${browser.runtime.lastError.message}`;
-            }
-            notify(msg);
-        }
+    browser.downloads.download({
+        url: url,
+        saveAs: true,
+        filename: filename
     });
 }
 
@@ -169,25 +156,13 @@ browser.runtime.onInstalled.addListener(() => {
 });
 
 browser.storage.onChanged.addListener((changes, area) => {
-    if (area === 'sync') {
-        let preferencesChanged = false;
-
-        if (changes.defaultType) {
-            userPreferences.defaultType = changes.defaultType.newValue;
-            preferencesChanged = true;
-        }
-        if (changes.defaultLocation) {
-            userPreferences.defaultLocation = changes.defaultLocation.newValue;
-            preferencesChanged = true;
-        }
-
-        if (preferencesChanged) {
-            updateContextMenus();
-        }
+    if (area === 'sync' && changes.defaultType) {
+        userPreferences.defaultType = changes.defaultType.newValue;
+        updateContextMenus();
     }
 });
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
     const { target, op } = message || {};
     if (target === 'background' && op) {
         if (op === 'download') {
