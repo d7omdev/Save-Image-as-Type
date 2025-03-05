@@ -231,7 +231,7 @@ async function processImageSave(srcUrl, type, tab, info) {
 
             // Check if offscreen API is available
             if (browser.offscreen && browser.offscreen.createDocument) {
-                const offscreenSrc = 'offscreen.html';
+                const offscreenSrc = 'src/offscreen/offscreen.html';
                 if (!(await hasOffscreenDocument(offscreenSrc))) {
                     await browser.offscreen.createDocument({
                         url: browser.runtime.getURL(offscreenSrc),
@@ -253,7 +253,7 @@ async function processImageSave(srcUrl, type, tab, info) {
 
                 await browser.scripting.executeScript({
                     target: { tabId: tab.id, frameIds },
-                    files: ["src/offscreen.js"],
+                    files: ["src/offscreen/offscreen.js"],
                 });
 
                 const port = connectTab(tab, info.frameId);
