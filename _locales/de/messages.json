@@ -1,32 +1,32 @@
 {
-    "extName": {
-        "message": "Save image as Type"
-    },
-    "extShortName": {
-        "message": "SaveImageAs"
-    },
-    "extDescription": {
-        "message": "Speichere Bilder als PNG-, JPG- oder WebP-Dateien mit einem Rechtsklick auf ein Bild."
-    },
-    "Save_as": {
-        "message": "Speichere als $FORMAT$",
-        "placeholders": {
-            "format": {
-                "content": "$1",
-                "example": "PNG"
-            }
-        }
-    },
-    "View_in_store": {
-        "message": "Im Store ansehen"
-    },
-    "errorIsNotImage": {
-        "message": "Das ist kein Bild."
-    },
-    "errorOnSaving": {
-        "message": "Beim Speichern des Bildes ist ein Fehler aufgetreten."
-    },
-    "errorOnLoading": {
-        "message": "Beim Laden des Bildes ist ein Fehler aufgetreten."
-    }
+	"extName": {
+		"message": "Save image as Type"
+	},
+	"extShortName": {
+		"message": "SaveImageAs"
+	},
+	"extDescription": {
+		"message": "Speichere Bilder als PNG-, JPG- oder WebP-Dateien mit einem Rechtsklick auf ein Bild."
+	},
+	"Save_as": {
+		"message": "Speichere als $FORMAT$",
+		"placeholders": {
+			"format": {
+				"content": "$1",
+				"example": "PNG"
+			}
+		}
+	},
+	"View_in_store": {
+		"message": "Im Store ansehen"
+	},
+	"errorIsNotImage": {
+		"message": "Das ist kein Bild."
+	},
+	"errorOnSaving": {
+		"message": "Beim Speichern des Bildes ist ein Fehler aufgetreten."
+	},
+	"errorOnLoading": {
+		"message": "Beim Laden des Bildes ist ein Fehler aufgetreten."
+	}
 }
