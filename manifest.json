@@ -1,33 +1,38 @@
 {
-    "name": "__MSG_extName__",
-    "short_name": "__MSG_extShortName__",
-    "description": "__MSG_extDescription__",
-    "icons": {
-        "128": "icon-128.svg",
-        "16": "icon-16.svg",
-        "48": "icon-48.svg"
-    },
-    "background": {
-        "scripts": [
-            "background.js"
-        ]
-    },
-    "default_locale": "en",
-    "manifest_version": 3,
-    "permissions": [
-        "downloads",
-        "contextMenus",
-        "activeTab",
-        "scripting"
-    ],
-    "host_permissions": [
-        "<all_urls>"
-    ],
-    "version": "0.1.0",
-    "browser_specific_settings": {
-        "gecko": {
-            "id": "SaveImageAsType@d7om.dev",
-            "strict_min_version": "88.0"
-        }
-    }
+	"name": "__MSG_extName__",
+	"short_name": "__MSG_extShortName__",
+	"description": "__MSG_extDescription__",
+	"icons": {
+		"128": "icon-128.svg",
+		"16": "icon-16.svg",
+		"48": "icon-48.svg"
+	},
+	"background": {
+		"scripts": [
+			"background.js"
+		]
+	},
+	"options_ui": {
+		"page": "options.html",
+		"browser_style": true
+	},
+	"default_locale": "en",
+	"manifest_version": 3,
+	"permissions": [
+		"downloads",
+		"contextMenus",
+		"activeTab",
+		"scripting",
+		"storage"
+	],
+	"host_permissions": [
+		"<all_urls>"
+	],
+	"version": "0.1.0",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "SaveImageAsType@d7om.dev",
+			"strict_min_version": "88.0"
+		}
+	}
 }
