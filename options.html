@@ -74,6 +74,16 @@
 		.reset-btn:hover {
 			background-color: #a4000f;
 		}
+
+		.location-display {
+			margin-top: 10px;
+			font-style: italic;
+			color: #666;
+		}
+
+		.hidden {
+			display: none;
+		}
 	</style>
 </head>
 
@@ -91,11 +101,16 @@
 		<p><small>Select "No default" to show all format options in a submenu</small></p>
 	</div>
 
-	<div class="option-group">
-		<label for="defaultLocation">Default Save Location:</label>
-		<input type="text" id="defaultLocation" placeholder="e.g., Downloads/Images">
-		<p><small>Leave empty to use browser's default download location</small></p>
-	</div>
+	<!-- NOTE: Dosent work cuz browser dosent allow fs access -->
+
+	<!-- <div class="option-group"> -->
+	<!-- 	<label for="defaultLocation">Default Save Location:</label> -->
+	<!-- 	<button id="selectLocation">Select Download Location</button> -->
+	<!-- 	<div id="locationDisplay" class="location-display">No location selected</div> -->
+	<!-- 	<input type="text" id="defaultLocation" class="hidden" placeholder="e.g., Downloads/Images"> -->
+	<!-- 	<p><small>Click the button to choose a default download location. If the button doesn't work, manually enter the -->
+	<!-- 			path above.</small></p> -->
+	<!-- </div> -->
 
 	<div class="actions">
 		<button id="save">Save Options</button>
