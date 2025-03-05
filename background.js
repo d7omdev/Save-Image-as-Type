@@ -1,18 +1,41 @@
 let messages;
+let userPreferences = {
+    defaultType: '',
+    defaultLocation: ''
+};
 
 if (!browser.i18n?.getMessage) {
     browser.i18n = browser.i18n || {};
     browser.i18n.getMessage = (key, args) => {
         const messages = {
             'View_in_store': 'View in store',
-            'Save_as': args?.[0] ? `Save as ${args[0]}` : key
+            'Save_as': args?.[0] ? `Save as ${args[0]}` : key,
+            'Save_image_as': 'Save image as type >'
         };
         return messages[key] || key;
     };
 }
 
+function loadUserPreferences() {
+    return browser.storage.sync.get({
+        defaultType: '',
+        defaultLocation: ''
+    }).then(items => {
+        userPreferences = items;
+        updateContextMenus();
+    });
+}
+
 function download(url, filename) {
-    browser.downloads.download({ url, filename, saveAs: true }, downloadId => {
+    const downloadOptions = { url, saveAs: true };
+
+    if (userPreferences.defaultLocation) {
+        downloadOptions.filename = `${userPreferences.defaultLocation}/${filename}`;
+    } else {
+        downloadOptions.filename = filename;
+    }
+
+    browser.downloads.download(downloadOptions, downloadId => {
         if (!downloadId) {
             let msg = browser.i18n.getMessage('errorOnSaving');
             if (browser.runtime.lastError) {
@@ -24,7 +47,7 @@ function download(url, filename) {
 }
 
 async function fetchAsDataURL(src, callback) {
-    if (src.startsWith('data:')) {
+    if (src.startsWith('')) {
         callback(null, src);
         return;
     }
@@ -42,7 +65,7 @@ async function fetchAsDataURL(src, callback) {
 
 function getSuggestedFilename(src, type) {
     if (/googleusercontent\.com\/[0-9a-zA-Z]{30,}/.test(src)) return `screenshot.${type}`;
-    if (src.startsWith('blob:') || src.startsWith('data:')) return `Untitled.${type}`;
+    if (src.startsWith('blob:') || src.startsWith('')) return `Untitled.${type}`;
     let filename = decodeURIComponent(src.replace(/[?#].*/, '').replace(/.*[\/]/, '').replace(/\+/g, ' '));
     filename = filename.replace(/[\x00-\x7f]+/g, s => s.replace(/[^\w\-\.\,@ ]+/g, ''))
         .replace(/\.[^0-9a-z]*\./g, '.')
@@ -64,7 +87,7 @@ function notify(msg) {
 function loadMessages() {
     if (!messages) {
         messages = {};
-        ['errorOnSaving', 'errorOnLoading'].forEach(key => {
+        ['errorOnSaving', 'errorOnLoading', 'errorIsNotImage'].forEach(key => {
             messages[key] = browser.i18n.getMessage(key);
         });
     }
@@ -72,28 +95,96 @@ function loadMessages() {
 }
 
 async function hasOffscreenDocument(path) {
-    const offscreenUrl = browser.runtime.getURL(path);
-    const matchedClients = await clients.matchAll();
-    return matchedClients.some(client => client.url === offscreenUrl);
+    try {
+        const offscreenUrl = browser.runtime.getURL(path);
+        const matchedClients = await clients.matchAll();
+        return matchedClients.some(client => client.url === offscreenUrl);
+    } catch (err) {
+        return false;
+    }
+}
+
+function updateContextMenus() {
+    browser.contextMenus.removeAll().then(() => {
+        if (userPreferences.defaultType) {
+            // Default type is selected: show a single menu item
+            const defaultTypeUpper = userPreferences.defaultType.toUpperCase();
+            browser.contextMenus.create({
+                id: 'save_as_default',
+                title: browser.i18n.getMessage("Save_as", [defaultTypeUpper]),
+                contexts: ["image"],
+                type: "normal",
+            });
+        } else {
+            // No default type: show "Save image as type >" with submenus
+            const parentId = browser.contextMenus.create({
+                id: 'save_image_as',
+                title: browser.i18n.getMessage("Save_image_as"),
+                contexts: ["image"],
+                type: "normal"
+            });
+
+            ['JPG', 'PNG', 'WebP'].forEach(type => {
+                const typeId = type.toLowerCase();
+                browser.contextMenus.create({
+                    id: `save_as_${typeId}`,
+                    parentId: parentId,
+                    title: type.toUpperCase(),
+                    contexts: ["image"],
+                    type: "normal"
+                });
+            });
+
+            // Add separator
+            browser.contextMenus.create({
+                id: "sep_1",
+                type: "separator",
+                parentId: parentId,
+                contexts: ["image"]
+            });
+
+            // Add "Options" and "View in store" under the parent menu
+            browser.contextMenus.create({
+                id: "open_options",
+                parentId: parentId,
+                title: browser.i18n.getMessage("Options"),
+                contexts: ["image"],
+                type: "normal"
+            });
+
+            browser.contextMenus.create({
+                id: "view_in_store",
+                parentId: parentId,
+                title: browser.i18n.getMessage("View_in_store"),
+                contexts: ["image"],
+                type: "normal"
+            });
+        }
+    });
 }
 
 browser.runtime.onInstalled.addListener(() => {
     loadMessages();
-    ['JPG', 'PNG', 'WebP'].forEach(type => {
-        browser.contextMenus.create({
-            id: `save_as_${type.toLowerCase()}`,
-            title: browser.i18n.getMessage("Save_as", [type]),
-            type: "normal",
-            contexts: ["image"],
-        });
-    });
-    browser.contextMenus.create({ id: "sep_1", type: "separator", contexts: ["image"] });
-    browser.contextMenus.create({
-        id: "view_in_store",
-        title: browser.i18n.getMessage("View_in_store"),
-        type: "normal",
-        contexts: ["image"],
-    });
+    loadUserPreferences();
+});
+
+browser.storage.onChanged.addListener((changes, area) => {
+    if (area === 'sync') {
+        let preferencesChanged = false;
+
+        if (changes.defaultType) {
+            userPreferences.defaultType = changes.defaultType.newValue;
+            preferencesChanged = true;
+        }
+        if (changes.defaultLocation) {
+            userPreferences.defaultLocation = changes.defaultLocation.newValue;
+            preferencesChanged = true;
+        }
+
+        if (preferencesChanged) {
+            updateContextMenus();
+        }
+    }
 });
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -119,35 +210,51 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
     const { menuItemId, mediaType, srcUrl } = info;
-    const connectTab = () => browser.tabs.connect(tab.id, { name: 'convertType', frameId: info.frameId });
 
-    if (menuItemId.startsWith('save_as_')) {
+    if (menuItemId === 'save_as_default') {
+        if (mediaType === 'image' && srcUrl) {
+            const type = userPreferences.defaultType;
+            processImageSave(srcUrl, type, tab, info);
+        } else {
+            notify(browser.i18n.getMessage("errorIsNotImage"));
+        }
+    } else if (menuItemId.startsWith('save_as_')) {
         if (mediaType === 'image' && srcUrl) {
             const type = menuItemId.replace('save_as_', '');
-            const filename = getSuggestedFilename(srcUrl, type);
-            loadMessages();
-            const noChange = srcUrl.startsWith(`data:image/${type === 'jpg' ? 'jpeg' : type};`);
-            if (!browser.offscreen) {
-                const frameIds = info.frameId ? [] : void 0;
-                await browser.scripting.executeScript({
-                    target: { tabId: tab.id, frameIds },
-                    files: ["offscreen.js"],
-                });
-            }
+            processImageSave(srcUrl, type, tab, info);
+        } else {
+            notify(browser.i18n.getMessage("errorIsNotImage"));
+        }
+    } else if (menuItemId === 'open_options') {
+        browser.runtime.openOptionsPage();
+    } else if (menuItemId === 'view_in_store') {
+        const url = `https://addons.mozilla.org/firefox/addon/siat/`;
+        browser.tabs.create({ url, index: tab.index + 1 });
+    }
+});
+
+function connectTab(tab, frameId) {
+    return browser.tabs.connect(tab.id, { name: 'convertType', frameId });
+}
+
+async function processImageSave(srcUrl, type, tab, info) {
+    const filename = getSuggestedFilename(srcUrl, type);
+    loadMessages();
+    const noChange = srcUrl.startsWith(`image/${type === 'jpg' ? 'jpeg' : type};`);
+
+    try {
+        if (browser.offscreen) {
             fetchAsDataURL(srcUrl, async (error, dataurl) => {
                 if (error) {
                     notify({ error, srcUrl });
                     return;
                 }
-                if (!browser.offscreen) {
-                    const port = connectTab();
-                    await port.postMessage({ op: noChange ? 'download' : 'convertType', target: 'content', src: dataurl, type, filename });
-                    return;
-                }
+
                 if (noChange) {
                     download(dataurl, filename);
                     return;
                 }
+
                 const offscreenSrc = 'offscreen.html';
                 if (!(await hasOffscreenDocument(offscreenSrc))) {
                     await browser.offscreen.createDocument({
@@ -156,14 +263,40 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
                         justification: 'Download an image for user',
                     });
                 }
-                await browser.runtime.sendMessage({ op: 'convertType', target: 'offscreen', src: dataurl, type, filename });
+
+                await browser.runtime.sendMessage({
+                    op: 'convertType',
+                    target: 'offscreen',
+                    src: dataurl,
+                    type,
+                    filename
+                });
             });
         } else {
-            notify(browser.i18n.getMessage("errorIsNotImage"));
-        }
-    } else if (menuItemId === 'view_in_store') {
-        const url = `https://addons.mozilla.org/firefox/addon/siat/`;
-        browser.tabs.create({ url, index: tab.index + 1 });
-    }
-});
+            const frameIds = info.frameId ? [info.frameId] : undefined;
 
+            await browser.scripting.executeScript({
+                target: { tabId: tab.id, frameIds },
+                files: ["offscreen.js"],
+            });
+
+            fetchAsDataURL(srcUrl, async (error, dataurl) => {
+                if (error) {
+                    notify({ error, srcUrl });
+                    return;
+                }
+
+                const port = connectTab(tab, info.frameId);
+                await port.postMessage({
+                    op: noChange ? 'download' : 'convertType',
+                    target: 'content',
+                    src: dataurl,
+                    type,
+                    filename
+                });
+            });
+        }
+    } catch (error) {
+        notify({ error: error.message || 'Unknown error', srcUrl });
+    }
+}

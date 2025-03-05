@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Save Image As Type Options</title>
+	<style>
+		body {
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			max-width: 600px;
+			margin: 0 auto;
+			padding: 20px;
+		}
+
+		.option-group {
+			margin-bottom: 20px;
+		}
+
+		h1 {
+			font-size: 1.5rem;
+			margin-bottom: 1.5rem;
+		}
+
+		label {
+			display: block;
+			margin-bottom: 5px;
+			font-weight: bold;
+		}
+
+		select,
+		input {
+			margin-bottom: 10px;
+			padding: 8px;
+			border-radius: 4px;
+			border: 1px solid #ccc;
+			width: 100%;
+			box-sizing: border-box;
+		}
+
+		button {
+			background-color: #0060df;
+			color: white;
+			border: none;
+			padding: 8px 16px;
+			border-radius: 4px;
+			cursor: pointer;
+			margin-right: 10px;
+		}
+
+		button:hover {
+			background-color: #003eaa;
+		}
+
+		.status {
+			color: green;
+			margin-top: 10px;
+			opacity: 0;
+			transition: opacity 0.5s;
+		}
+
+		.status.visible {
+			opacity: 1;
+		}
+
+		.actions {
+			display: flex;
+			align-items: center;
+		}
+
+		.reset-btn {
+			background-color: #d70022;
+		}
+
+		.reset-btn:hover {
+			background-color: #a4000f;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Save Image As Type Options</h1>
+
+	<div class="option-group">
+		<label for="defaultType">Default Image Type:</label>
+		<select id="defaultType">
+			<option value="">No default (show submenu)</option>
+			<option value="jpg">JPG</option>
+			<option value="png">PNG</option>
+			<option value="webp">WebP</option>
+		</select>
+		<p><small>Select "No default" to show all format options in a submenu</small></p>
+	</div>
+
+	<div class="option-group">
+		<label for="defaultLocation">Default Save Location:</label>
+		<input type="text" id="defaultLocation" placeholder="e.g., Downloads/Images">
+		<p><small>Leave empty to use browser's default download location</small></p>
+	</div>
+
+	<div class="actions">
+		<button id="save">Save Options</button>
+		<button id="reset" class="reset-btn">Reset to Defaults</button>
+		<div id="status" class="status">Options saved!</div>
+	</div>
+
+	<script src="options.js"></script>
+</body>
+
+</html>

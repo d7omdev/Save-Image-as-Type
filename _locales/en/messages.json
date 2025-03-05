@@ -1,32 +1,48 @@
 {
 	"extName": {
-		"message": "Save image as Type"
+		"message": "Save Image As Type",
+		"description": "Extension name"
 	},
 	"extShortName": {
-		"message": "SaveImageAs"
+		"message": "SIAT",
+		"description": "Extension short name"
 	},
 	"extDescription": {
-		"message": "Save image as PNG, JPG or WebP by context menu on image."
+		"message": "Save images as JPG, PNG, or WebP with a single click",
+		"description": "Extension description"
 	},
 	"Save_as": {
-		"message": "Save as $FORMAT$",
+		"message": "Save as $TYPE$",
+		"description": "Save as menu item",
 		"placeholders": {
-			"format": {
+			"type": {
 				"content": "$1",
-				"example": "PNG"
+				"example": "JPG"
 			}
 		}
 	},
-	"View_in_store": {
-		"message": "View in store"
+	"Save_image_as": {
+		"message": "Save image as",
+		"description": "Save image as menu item"
 	},
-	"errorIsNotImage": {
-		"message": "It's not an image"
+	"Options": {
+		"message": "Options",
+		"description": "Options menu item"
+	},
+	"View_in_store": {
+		"message": "View in store",
+		"description": "View in store menu item"
 	},
 	"errorOnSaving": {
-		"message": "An error occurred while saving the image"
+		"message": "Error occurred while saving the image",
+		"description": "Error message when saving fails"
 	},
 	"errorOnLoading": {
-		"message": "An error occurred while loading the image"
+		"message": "Error occurred while loading the image",
+		"description": "Error message when loading fails"
+	},
+	"errorIsNotImage": {
+		"message": "The selected element is not an image",
+		"description": "Error message when selected element is not an image"
 	}
 }
