@@ -1,23 +1,30 @@
 {
+	"manifest_version": 3,
 	"name": "__MSG_extName__",
 	"short_name": "__MSG_extShortName__",
 	"description": "__MSG_extDescription__",
+	"version": "1.0.0",
+	"default_locale": "en",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "SaveImageAsType@d7om.dev",
+			"strict_min_version": "110.0"
+		}
+	},
 	"icons": {
-		"128": "icon-128.svg",
-		"16": "icon-16.svg",
-		"48": "icon-48.svg"
+		"16": "assets/icons/icon-16.svg",
+		"48": "assets/icons/icon-48.svg",
+		"128": "assets/icons/icon-128.svg"
 	},
 	"background": {
 		"scripts": [
-			"background.js"
+			"src/background.js"
 		]
 	},
 	"options_ui": {
-		"page": "options.html",
-		"browser_style": true
+		"page": "options/options.html",
+		"open_in_tab": false
 	},
-	"default_locale": "en",
-	"manifest_version": 3,
 	"permissions": [
 		"downloads",
 		"contextMenus",
@@ -26,13 +33,7 @@
 		"storage"
 	],
 	"host_permissions": [
-		"<all_urls>"
+		"*://*/*"
 	],
-	"version": "0.1.0",
-	"browser_specific_settings": {
-		"gecko": {
-			"id": "SaveImageAsType@d7om.dev",
-			"strict_min_version": "88.0"
-		}
-	}
+	"homepage_url": "https://github.com/d7omdev/Save-Image-as-Type"
 }
