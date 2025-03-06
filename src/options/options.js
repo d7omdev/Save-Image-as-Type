@@ -1,4 +1,8 @@
-// Saves options to browser.storage
+
+document.addEventListener('DOMContentLoaded', restoreOptions);
+document.getElementById('save').addEventListener('click', saveOptions);
+document.getElementById('reset').addEventListener('click', resetOptions);
+
 function saveOptions(e) {
     e.preventDefault();
     browser.storage.sync.set({
@@ -10,7 +14,6 @@ function saveOptions(e) {
     });
 }
 
-// Restores preferences
 function restoreOptions() {
     browser.storage.sync.get({
         defaultType: ''
@@ -19,13 +22,9 @@ function restoreOptions() {
     });
 }
 
-// Reset options
 function resetOptions(e) {
     e.preventDefault();
     document.getElementById('defaultType').value = '';
     saveOptions(e);
 }
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('save').addEventListener('click', saveOptions);
-document.getElementById('reset').addEventListener('click', resetOptions);

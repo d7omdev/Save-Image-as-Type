@@ -3,7 +3,7 @@
 	"name": "__MSG_extName__",
 	"short_name": "__MSG_extShortName__",
 	"description": "__MSG_extDescription__",
-	"version": "1.0.0",
+	"version": "1.1.1",
 	"default_locale": "en",
 	"browser_specific_settings": {
 		"gecko": {
@@ -33,7 +33,7 @@
 		"storage"
 	],
 	"host_permissions": [
-		"*://*/*"
+		"<all_urls>"
 	],
 	"homepage_url": "https://github.com/d7omdev/Save-Image-as-Type"
 }
