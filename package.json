@@ -8,7 +8,8 @@
 		"lint": "web-ext lint",
 		"test": "web-ext run --pref extensions.experiments.enabled=true",
 		"clean": "rm -rf web-ext-artifacts/",
-		"prepare": "npm run clean && npm run build"
+		"prepare": "npm run clean && npm run build",
+		"sign": "web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET"
 	},
 	"keywords": [
 		"firefox",
