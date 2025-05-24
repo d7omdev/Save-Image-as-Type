@@ -1,39 +1,35 @@
 {
-	"manifest_version": 3,
-	"name": "__MSG_extName__",
-	"short_name": "__MSG_extShortName__",
-	"description": "__MSG_extDescription__",
-	"version": "1.1.1",
-	"default_locale": "en",
-	"browser_specific_settings": {
-		"gecko": {
-			"id": "SaveImageAsType@d7om.dev",
-			"strict_min_version": "110.0"
-		}
-	},
-	"icons": {
-		"16": "assets/icons/icon-16.svg",
-		"48": "assets/icons/icon-48.svg",
-		"128": "assets/icons/icon-128.svg"
-	},
-	"background": {
-		"scripts": [
-			"src/background.js"
-		]
-	},
-	"options_ui": {
-		"page": "src/options/options.html",
-		"open_in_tab": false
-	},
-	"permissions": [
-		"downloads",
-		"contextMenus",
-		"activeTab",
-		"scripting",
-		"storage"
-	],
-	"host_permissions": [
-		"<all_urls>"
-	],
-	"homepage_url": "https://github.com/d7omdev/Save-Image-as-Type"
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "short_name": "__MSG_extShortName__",
+  "description": "__MSG_extDescription__",
+  "version": "1.1.2",
+  "default_locale": "en",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "SaveImageAsType@d7om.dev",
+      "strict_min_version": "110.0"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon-16.svg",
+    "48": "assets/icons/icon-48.svg",
+    "128": "assets/icons/icon-128.svg"
+  },
+  "background": {
+    "scripts": ["src/background.js"]
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": false
+  },
+  "permissions": [
+    "downloads",
+    "contextMenus",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "homepage_url": "https://github.com/d7omdev/Save-Image-as-Type"
 }
