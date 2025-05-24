@@ -1,32 +1,33 @@
 {
-	"name": "save-image-as-type",
-	"version": "1.1.1",
-	"description": "A Firefox extension to save images in your preferred format.",
-	"scripts": {
-		"start": "web-ext run --devtools",
-		"build": "web-ext build",
-		"lint": "web-ext lint",
-		"test": "web-ext run --pref extensions.experiments.enabled=true",
-		"clean": "rm -rf web-ext-artifacts/",
-		"prepare": "npm run clean && npm run build"
-	},
-	"keywords": [
-		"firefox",
-		"extension",
-		"image",
-		"download"
-	],
-	"author": "D7OM <hello@d7om.dev>",
-	"license": "MPL-2.0",
-	"devDependencies": {
-		"web-ext": "^7.6.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/d7omdev/Save-Image-as-Type.git"
-	},
-	"bugs": {
-		"url": "https://github.com/d7omdev/Save-Image-as-Type/issues"
-	},
-	"homepage": "https://github.com/d7omdev/Save-Image-as-Type#readme"
+  "name": "save-image-as-type",
+  "version": "1.1.2",
+  "description": "A Firefox extension to save images in your preferred format.",
+  "scripts": {
+    "start": "web-ext run --devtools",
+    "build": "web-ext build",
+    "lint": "web-ext lint",
+    "test": "web-ext run --pref extensions.experiments.enabled=true",
+    "clean": "rm -rf web-ext-artifacts/",
+    "prepare": "npm run clean && npm run build",
+    "sign": "web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET"
+  },
+  "keywords": [
+    "firefox",
+    "extension",
+    "image",
+    "download"
+  ],
+  "author": "D7OM <hello@d7om.dev>",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "web-ext": "^7.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/d7omdev/Save-Image-as-Type.git"
+  },
+  "bugs": {
+    "url": "https://github.com/d7omdev/Save-Image-as-Type/issues"
+  },
+  "homepage": "https://github.com/d7omdev/Save-Image-as-Type#readme"
 }
