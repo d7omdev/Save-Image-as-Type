@@ -1,6 +1,6 @@
 {
   "name": "save-image-as-type",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "A Firefox extension to save images in your preferred format.",
   "scripts": {
     "start": "web-ext run --devtools",
@@ -9,7 +9,10 @@
     "test": "web-ext run --pref extensions.experiments.enabled=true",
     "clean": "rm -rf web-ext-artifacts/",
     "prepare": "npm run clean && npm run build",
-    "sign": "web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET"
+    "sign": "web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET",
+    "version:patch": "npm version patch --no-git-tag-version && node -e \"const fs=require('fs'); const manifest=JSON.parse(fs.readFileSync('manifest.json')); const pkg=JSON.parse(fs.readFileSync('package.json')); manifest.version=pkg.version; fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));\"",
+    "version:minor": "npm version minor --no-git-tag-version && node -e \"const fs=require('fs'); const manifest=JSON.parse(fs.readFileSync('manifest.json')); const pkg=JSON.parse(fs.readFileSync('package.json')); manifest.version=pkg.version; fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));\"",
+    "version:major": "npm version major --no-git-tag-version && node -e \"const fs=require('fs'); const manifest=JSON.parse(fs.readFileSync('manifest.json')); const pkg=JSON.parse(fs.readFileSync('package.json')); manifest.version=pkg.version; fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));\""
   },
   "keywords": [
     "firefox",

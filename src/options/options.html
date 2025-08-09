@@ -1,194 +1,201 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Save Image As Type Options</title>
+    <style>
+      :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --text-primary: #ffffff;
+        --text-secondary: #b3b3b3;
+        --accent-primary: #0060df;
+        --accent-hover: #003eaa;
+        --danger: #d70022;
+        --danger-hover: #a4000f;
+        --border-color: #404040;
+      }
 
-<head>
-	<meta charset="utf-8">
-	<title>Save Image As Type Options</title>
-	<style>
-		:root {
-			--bg-primary: #1a1a1a;
-			--bg-secondary: #2d2d2d;
-			--text-primary: #ffffff;
-			--text-secondary: #b3b3b3;
-			--accent-primary: #0060df;
-			--accent-hover: #003eaa;
-			--danger: #d70022;
-			--danger-hover: #a4000f;
-			--border-color: #404040;
-		}
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
 
-		body {
-			font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-			max-width: 600px;
-			margin: 0 auto;
-			padding: 20px;
-			background-color: var(--bg-primary);
-			color: var(--text-primary);
-		}
+      .option-group {
+        background-color: var(--bg-secondary);
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+      }
 
-		.option-group {
-			background-color: var(--bg-secondary);
-			padding: 20px;
-			margin-bottom: 20px;
-			border-radius: 8px;
-			border: 1px solid var(--border-color);
-		}
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+      }
 
-		h1 {
-			font-size: 1.5rem;
-			margin-bottom: 1.5rem;
-			color: var(--text-primary);
-		}
+      label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
 
-		label {
-			display: block;
-			margin-bottom: 10px;
-			font-weight: 500;
-			color: var(--text-primary);
-		}
+      select,
+      input[type="text"] {
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        width: 100%;
+        box-sizing: border-box;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
 
-		select,
-		input[type="text"] {
-			margin-bottom: 10px;
-			padding: 10px;
-			border-radius: 6px;
-			border: 1px solid var(--border-color);
-			width: 100%;
-			box-sizing: border-box;
-			background-color: var(--bg-primary);
-			color: var(--text-primary);
-		}
+      select:focus,
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+      }
 
-		select:focus,
-		input[type="text"]:focus {
-			outline: none;
-			border-color: var(--accent-primary);
-		}
+      .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
 
-		.checkbox-container {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			margin-bottom: 10px;
-		}
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        margin: 0;
+        vertical-align: middle;
+      }
 
-		input[type="checkbox"] {
-			width: 18px;
-			height: 18px;
-			cursor: pointer;
-			margin: 0;
-			vertical-align: middle;
-		}
+      .checkbox-container label {
+        margin: 0;
+        line-height: 18px;
+        vertical-align: middle;
+      }
 
-		.checkbox-container label {
-			margin: 0;
-			line-height: 18px;
-			vertical-align: middle;
-		}
+      button {
+        background-color: var(--accent-primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
 
-		button {
-			background-color: var(--accent-primary);
-			color: white;
-			border: none;
-			padding: 10px 20px;
-			border-radius: 6px;
-			cursor: pointer;
-			margin-right: 10px;
-			font-weight: 500;
-			transition: background-color 0.2s;
-		}
+      button:hover {
+        background-color: var(--accent-hover);
+      }
 
-		button:hover {
-			background-color: var(--accent-hover);
-		}
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        padding: 12px 24px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
 
-		.toast {
-			position: fixed;
-			bottom: 20px;
-			right: 20px;
-			background-color: var(--bg-secondary);
-			color: var(--text-primary);
-			padding: 12px 24px;
-			border-radius: 6px;
-			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-			opacity: 0;
-			transform: translateY(20px);
-			transition: all 0.3s ease;
-			z-index: 1000;
-		}
+      .toast.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
 
-		.toast.visible {
-			opacity: 1;
-			transform: translateY(0);
-		}
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-		.actions {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-		}
+      .reset-btn {
+        background-color: var(--danger);
+      }
 
-		.reset-btn {
-			background-color: var(--danger);
-		}
+      .reset-btn:hover {
+        background-color: var(--danger-hover);
+      }
 
-		.reset-btn:hover {
-			background-color: var(--danger-hover);
-		}
+      small {
+        color: var(--text-secondary);
+        display: block;
+        margin-top: 5px;
+      }
 
-		small {
-			color: var(--text-secondary);
-			display: block;
-			margin-top: 5px;
-		}
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
 
-		.hidden {
-			display: none;
-		}
-	</style>
-</head>
+  <body>
+    <h1>Save Image As Type Options</h1>
 
-<body>
-	<h1>Save Image As Type Options</h1>
+    <div class="option-group">
+      <label for="defaultType">Default Image Type:</label>
+      <select id="defaultType">
+        <option value="">No default (show submenu)</option>
+        <option value="jpg">JPG</option>
+        <option value="png">PNG</option>
+        <option value="webp">WebP</option>
+      </select>
+      <small>Select "No default" to show all format options in a submenu</small>
+    </div>
 
-	<div class="option-group">
-		<label for="defaultType">Default Image Type:</label>
-		<select id="defaultType">
-			<option value="">No default (show submenu)</option>
-			<option value="jpg">JPG</option>
-			<option value="png">PNG</option>
-			<option value="webp">WebP</option>
-		</select>
-		<small>Select "No default" to show all format options in a submenu</small>
-	</div>
+    <div class="option-group">
+      <div class="checkbox-container">
+        <input type="checkbox" id="showStoreButton" />
+        <label for="showStoreButton">Show "View in Store" button</label>
+      </div>
+      <small
+        >Toggle the visibility of the "View in Store" button in the context
+        menu</small
+      >
+    </div>
 
-	<div class="option-group">
-		<div class="checkbox-container">
-			<input type="checkbox" id="showStoreButton">
-			<label for="showStoreButton">Show "View in Store" button</label>
-		</div>
-		<small>Toggle the visibility of the "View in Store" button in the context menu</small>
-	</div>
+    <!-- NOTE: Dosent work cuz browser dosent allow fs access -->
 
-	<!-- NOTE: Dosent work cuz browser dosent allow fs access -->
+    <!-- <div class="option-group"> -->
+    <!-- 	<label for="defaultLocation">Default Save Location:</label> -->
+    <!-- 	<button id="selectLocation">Select Download Location</button> -->
+    <!-- 	<div id="locationDisplay" class="location-display">No location selected</div> -->
+    <!-- 	<input type="text" id="defaultLocation" class="hidden" placeholder="e.g., Downloads/Images"> -->
+    <!-- 	<p><small>Click the button to choose a default download location. If the button doesn't work, manually enter the -->
+    <!-- 			path above.</small></p> -->
+    <!-- </div> -->
 
-	<!-- <div class="option-group"> -->
-	<!-- 	<label for="defaultLocation">Default Save Location:</label> -->
-	<!-- 	<button id="selectLocation">Select Download Location</button> -->
-	<!-- 	<div id="locationDisplay" class="location-display">No location selected</div> -->
-	<!-- 	<input type="text" id="defaultLocation" class="hidden" placeholder="e.g., Downloads/Images"> -->
-	<!-- 	<p><small>Click the button to choose a default download location. If the button doesn't work, manually enter the -->
-	<!-- 			path above.</small></p> -->
-	<!-- </div> -->
+    <div class="actions">
+      <button id="save">Save Options</button>
+      <button id="reset" class="reset-btn">Reset to Defaults</button>
+    </div>
 
-	<div class="actions">
-		<button id="save">Save Options</button>
-		<button id="reset" class="reset-btn">Reset to Defaults</button>
-	</div>
+    <div id="toast" class="toast">Options saved!</div>
 
-	<div id="toast" class="toast">Options saved!</div>
-
-	<script src="options.js"></script>
-</body>
-
+    <script src="options.js"></script>
+  </body>
 </html>

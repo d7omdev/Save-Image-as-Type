@@ -1,5 +1,9 @@
 let messages;
-let userPreferences = { defaultType: "", defaultLocation: "", showStoreButton: false };
+let userPreferences = {
+  defaultType: "",
+  defaultLocation: "",
+  showStoreButton: false,
+};
 
 if (!browser.i18n?.getMessage) {
   browser.i18n = browser.i18n || {};
@@ -18,10 +22,12 @@ if (!browser.i18n?.getMessage) {
 }
 
 function loadUserPreferences() {
-  return browser.storage.sync.get({ defaultType: "", showStoreButton: false }).then((items) => {
-    userPreferences = items;
-    updateContextMenus();
-  });
+  return browser.storage.sync
+    .get({ defaultType: "", showStoreButton: false })
+    .then((items) => {
+      userPreferences = items;
+      updateContextMenus();
+    });
 }
 
 function updateContextMenus() {
@@ -112,6 +118,8 @@ function download(url, filename) {
             }
             notify(msg);
           }
+          // Clean up blob URL after download
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         },
       );
     } catch (error) {
@@ -168,7 +176,7 @@ function getSuggestedFilename(src, type) {
     .replace(/\s\s+/g, " ")
     .trim();
   filename = filename.replace(/\.(jpe?g|png|gif|webp|svg)$/gi, "").trim();
-  if (filename.length > 32) filename = filename.substr(0, 32);
+  if (filename.length > 32) filename = filename.substring(0, 32);
   filename = filename.replace(/[^0-9a-z]+$/i, "").trim();
   return (filename || "image") + `.${type}`;
 }
@@ -210,7 +218,7 @@ async function processImageSave(srcUrl, type, tab, info) {
   loadMessages();
   // Determine if no conversion is needed (already in the desired format)
   const noChange = srcUrl.startsWith(
-    `image/${type === "jpg" ? "jpeg" : type};`,
+    `data:image/${type === "jpg" ? "jpeg" : type};`,
   );
 
   try {
@@ -250,8 +258,8 @@ async function processImageSave(srcUrl, type, tab, info) {
           files: ["src/offscreen/offscreen.js"],
         });
         const port = connectTab(tab, info.frameId);
-        await port.postMessage({
-          op: noChange ? "download" : "convertType",
+        port.postMessage({
+          op: "convertType",
           target: "content",
           src: dataurl,
           type,
