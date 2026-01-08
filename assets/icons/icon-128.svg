@@ -2,6 +2,11 @@
 <!-- Generator: Adobe Illustrator 18.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 298.73 298.73" style="enable-background:new 0 0 298.73 298.73;" xml:space="preserve">
+<style>
+@media (prefers-color-scheme: light) {
+  #Capa_1 { filter: invert(1); }
+}
+</style>
 <g>
 	<path style="fill:#fff;" d="M264.959,9.35H33.787C15.153,9.35,0,24.498,0,43.154v212.461c0,18.634,15.153,33.766,33.787,33.766
 		h231.171c18.634,0,33.771-15.132,33.771-33.766V43.154C298.73,24.498,283.593,9.35,264.959,9.35z M193.174,59.623
