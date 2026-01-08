@@ -11,7 +11,7 @@ if (!browser.i18n?.getMessage) {
     const messages = {
       View_in_store: "View in store",
       Save_as: args?.[0] ? `Save as ${args[0]}` : key,
-      Save_image_as: "Save image as type >",
+      Save_image_as: "Save image as type",
       Options: "Options",
       errorOnSaving: "Error on saving",
       errorIsNotImage: "Selected item is not an image",
