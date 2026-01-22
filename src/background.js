@@ -33,6 +33,7 @@ function loadUserPreferences() {
 function updateContextMenus() {
   browser.contextMenus.removeAll().then(() => {
     if (userPreferences.defaultType) {
+      // Create default save button (no submenu)
       const defaultTypeUpper = userPreferences.defaultType.toUpperCase();
       browser.contextMenus.create({
         id: "save_as_default",
@@ -41,6 +42,7 @@ function updateContextMenus() {
         type: "normal",
       });
     } else {
+      // Create save submenu with format options
       const parentId = browser.contextMenus.create({
         id: "save_image_as",
         title: browser.i18n.getMessage("Save_image_as"),
@@ -57,31 +59,39 @@ function updateContextMenus() {
           type: "normal",
         });
       });
+    }
 
-      browser.contextMenus.create({
-        id: "sep_1",
-        type: "separator",
-        parentId: parentId,
-        contexts: ["image"],
-      });
+    // Add copy to clipboard as a separate root-level button
+    browser.contextMenus.create({
+      id: "copy_to_clipboard",
+      title: browser.i18n.getMessage("Copy_to_clipboard") || "Copy to clipboard",
+      contexts: ["image"],
+      type: "normal",
+    });
 
+    // Add separator before options
+    browser.contextMenus.create({
+      id: "sep_options",
+      type: "separator",
+      contexts: ["image"],
+    });
+
+    // Add Options button
+    browser.contextMenus.create({
+      id: "open_options",
+      title: browser.i18n.getMessage("Options"),
+      contexts: ["image"],
+      type: "normal",
+    });
+
+    // Add View in Store button if enabled
+    if (userPreferences.showStoreButton) {
       browser.contextMenus.create({
-        id: "open_options",
-        parentId: parentId,
-        title: browser.i18n.getMessage("Options"),
+        id: "view_in_store",
+        title: browser.i18n.getMessage("View_in_store"),
         contexts: ["image"],
         type: "normal",
       });
-
-      if (userPreferences.showStoreButton) {
-        browser.contextMenus.create({
-          id: "view_in_store",
-          parentId: parentId,
-          title: browser.i18n.getMessage("View_in_store"),
-          contexts: ["image"],
-          type: "normal",
-        });
-      }
     }
   });
 }
@@ -182,10 +192,15 @@ function getSuggestedFilename(src, type) {
 }
 
 function notify(msg) {
-  if (msg.error) {
-    msg = `${browser.i18n.getMessage(msg.error) || msg.error}\n${msg.srcUrl || msg.src}`;
+  let displayMsg = msg;
+  if (typeof msg === 'object' && msg !== null) {
+    if (msg.error) {
+      displayMsg = `${browser.i18n.getMessage(msg.error) || msg.error}\n${msg.srcUrl || msg.src}`;
+    } else {
+      displayMsg = JSON.stringify(msg);
+    }
   }
-  console.error(msg);
+  console.log(displayMsg);
 }
 
 function loadMessages() {
@@ -272,6 +287,68 @@ async function processImageSave(srcUrl, type, tab, info) {
   }
 }
 
+async function processImageClipboard(srcUrl, type, tab, info) {
+  loadMessages();
+
+  try {
+    fetchAsDataURL(srcUrl, async (error, dataurl) => {
+      if (error) {
+        notify({ error, srcUrl });
+        return;
+      }
+
+      // Use Offscreen API if available (but only in Chromium-based browsers)
+      // Firefox's offscreen API doesn't support clipboard operations reliably
+      const isChrome = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
+      if (isChrome && browser.offscreen && browser.offscreen.createDocument) {
+        const offscreenSrc = "src/offscreen/offscreen.html";
+        if (!(await hasOffscreenDocument(offscreenSrc))) {
+          try {
+            await browser.offscreen.createDocument({
+              url: browser.runtime.getURL(offscreenSrc),
+              reasons: ["CLIPBOARD"],
+              justification: "Copy an image to clipboard for user",
+            });
+          } catch (err) {
+            // Fall back to DOM_SCRAPING if CLIPBOARD reason is not supported
+            try {
+              await browser.offscreen.createDocument({
+                url: browser.runtime.getURL(offscreenSrc),
+                reasons: ["DOM_SCRAPING"],
+                justification: "Copy an image to clipboard for user",
+              });
+            } catch (err2) {
+              console.error("Failed to create offscreen document:", err2);
+            }
+          }
+        }
+        await browser.runtime.sendMessage({
+          op: "copyToClipboard",
+          target: "offscreen",
+          src: dataurl,
+          type,
+        });
+      } else {
+        // Fallback to content script approach via port
+        const frameIds = info.frameId ? [info.frameId] : undefined;
+        await browser.scripting.executeScript({
+          target: { tabId: tab.id, frameIds },
+          files: ["src/offscreen/offscreen.js"],
+        });
+        const port = connectTab(tab, info.frameId);
+        port.postMessage({
+          op: "copyToClipboard",
+          target: "content",
+          src: dataurl,
+          type,
+        });
+      }
+    });
+  } catch (error) {
+    notify({ error: error.message || "Unknown error", srcUrl });
+  }
+}
+
 //
 // Event Listeners
 //
@@ -328,6 +405,12 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
     if (mediaType === "image" && srcUrl) {
       const type = menuItemId.replace("save_as_", "");
       processImageSave(srcUrl, type, tab, info);
+    } else {
+      notify(browser.i18n.getMessage("errorIsNotImage"));
+    }
+  } else if (menuItemId === "copy_to_clipboard") {
+    if (mediaType === "image" && srcUrl) {
+      processImageClipboard(srcUrl, "png", tab, info);
     } else {
       notify(browser.i18n.getMessage("errorIsNotImage"));
     }
