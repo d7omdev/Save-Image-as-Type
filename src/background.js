@@ -33,7 +33,6 @@ function loadUserPreferences() {
 function updateContextMenus() {
   browser.contextMenus.removeAll().then(() => {
     if (userPreferences.defaultType) {
-      // Create default save button (no submenu)
       const defaultTypeUpper = userPreferences.defaultType.toUpperCase();
       browser.contextMenus.create({
         id: "save_as_default",
@@ -42,18 +41,9 @@ function updateContextMenus() {
         type: "normal",
       });
     } else {
-      // Create save submenu with format options
-      const parentId = browser.contextMenus.create({
-        id: "save_image_as",
-        title: browser.i18n.getMessage("Save_image_as"),
-        contexts: ["image"],
-        type: "normal",
-      });
-
       ["JPG", "PNG", "WebP"].forEach((type) => {
         browser.contextMenus.create({
           id: `save_as_${type.toLowerCase()}`,
-          parentId: parentId,
           title: type.toUpperCase(),
           contexts: ["image"],
           type: "normal",
@@ -61,7 +51,12 @@ function updateContextMenus() {
       });
     }
 
-    // Add copy to clipboard as a separate root-level button
+    browser.contextMenus.create({
+      id: "sep_copy",
+      type: "separator",
+      contexts: ["image"],
+    });
+
     browser.contextMenus.create({
       id: "copy_to_clipboard",
       title: browser.i18n.getMessage("Copy_to_clipboard") || "Copy to clipboard",
@@ -69,14 +64,12 @@ function updateContextMenus() {
       type: "normal",
     });
 
-    // Add separator before options
     browser.contextMenus.create({
       id: "sep_options",
       type: "separator",
       contexts: ["image"],
     });
 
-    // Add Options button
     browser.contextMenus.create({
       id: "open_options",
       title: browser.i18n.getMessage("Options"),
@@ -84,7 +77,6 @@ function updateContextMenus() {
       type: "normal",
     });
 
-    // Add View in Store button if enabled
     if (userPreferences.showStoreButton) {
       browser.contextMenus.create({
         id: "view_in_store",
@@ -160,12 +152,20 @@ async function fetchAsDataURL(src, callback) {
     const res = await fetch(src);
     const blob = await res.blob();
     if (!blob.size) throw "Fetch failed of 0 size";
-    const reader = new FileReader();
-    reader.onload = (evt) => callback(null, evt.target.result);
-    reader.readAsDataURL(blob);
+    // Use arrayBuffer instead of FileReader — FileReader is not available in
+    // Firefox MV3 service workers, causing silent failures in the original code.
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    const dataurl = `data:${blob.type};base64,${btoa(binary)}`;
+    callback(null, dataurl);
   } catch (error) {
     console.error("Fetch error:", error);
-    callback(null, src);
+    callback(error.message || String(error));
   }
 }
 
@@ -242,8 +242,7 @@ async function processImageSave(srcUrl, type, tab, info) {
         notify({ error, srcUrl });
         return;
       }
-      // If we didn't get a converted data URL (e.g. due to CORS), dataurl will be the original URL
-      if (noChange || dataurl === srcUrl) {
+      if (noChange) {
         download(dataurl, filename);
         return;
       }
