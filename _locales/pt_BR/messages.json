@@ -9,7 +9,7 @@
     "message": "Salve imagens como PNG, JPG ou WebP com um clique."
   },
   "Save_as": {
-    "message": "Salvar como $TYPE$",
+    "message": "Salvar imagem como $TYPE$",
     "placeholders": {
       "type": {
         "content": "$1",
@@ -18,24 +18,21 @@
     }
   },
   "Save_image_as": {
-    "message": "Salvar imagem como tipo",
+    "message": "Salvar imagem como tipo"
   },
   "Options": {
-    "message": "Opções",
+    "message": "Opções"
   },
   "View_in_store": {
-    "message": "Ver na loja",
-  },
-  "errorIsNotImage": {
-    "message": "Não é uma imagem",
+    "message": "Ver na loja"
   },
   "errorOnSaving": {
-    "message": "Ocorreu um erro ao salvar imagem",
+    "message": "Ocorreu um erro ao salvar imagem"
   },
   "errorOnLoading": {
-    "message": "Ocorreu um erro ao carregar imagem",
+    "message": "Ocorreu um erro ao carregar imagem"
   },
   "errorIsNotImage": {
-    "message": "O elemento selecionado não é uma imagem",
+    "message": "O elemento selecionado não é uma imagem"
   }
 }

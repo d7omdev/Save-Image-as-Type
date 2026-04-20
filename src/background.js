@@ -33,6 +33,8 @@ function loadUserPreferences() {
 function updateContextMenus() {
   browser.contextMenus.removeAll().then(() => {
     if (userPreferences.defaultType) {
+      // Single root-level button — no separator, no Options entry, so Firefox
+      // renders it inline instead of auto-collapsing into a submenu.
       const defaultTypeUpper = userPreferences.defaultType.toUpperCase();
       browser.contextMenus.create({
         id: "save_as_default",
@@ -40,16 +42,17 @@ function updateContextMenus() {
         contexts: ["image"],
         type: "normal",
       });
-    } else {
-      ["JPG", "PNG", "WebP"].forEach((type) => {
-        browser.contextMenus.create({
-          id: `save_as_${type.toLowerCase()}`,
-          title: type.toUpperCase(),
-          contexts: ["image"],
-          type: "normal",
-        });
-      });
+      return;
     }
+
+    ["JPG", "PNG", "WebP"].forEach((type) => {
+      browser.contextMenus.create({
+        id: `save_as_${type.toLowerCase()}`,
+        title: type.toUpperCase(),
+        contexts: ["image"],
+        type: "normal",
+      });
+    });
 
     browser.contextMenus.create({
       id: "sep_options",
