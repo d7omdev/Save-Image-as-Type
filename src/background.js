@@ -52,19 +52,6 @@ function updateContextMenus() {
     }
 
     browser.contextMenus.create({
-      id: "sep_copy",
-      type: "separator",
-      contexts: ["image"],
-    });
-
-    browser.contextMenus.create({
-      id: "copy_to_clipboard",
-      title: browser.i18n.getMessage("Copy_to_clipboard") || "Copy to clipboard",
-      contexts: ["image"],
-      type: "normal",
-    });
-
-    browser.contextMenus.create({
       id: "sep_options",
       type: "separator",
       contexts: ["image"],
@@ -286,68 +273,6 @@ async function processImageSave(srcUrl, type, tab, info) {
   }
 }
 
-async function processImageClipboard(srcUrl, type, tab, info) {
-  loadMessages();
-
-  try {
-    fetchAsDataURL(srcUrl, async (error, dataurl) => {
-      if (error) {
-        notify({ error, srcUrl });
-        return;
-      }
-
-      // Use Offscreen API if available (but only in Chromium-based browsers)
-      // Firefox's offscreen API doesn't support clipboard operations reliably
-      const isChrome = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
-      if (isChrome && browser.offscreen && browser.offscreen.createDocument) {
-        const offscreenSrc = "src/offscreen/offscreen.html";
-        if (!(await hasOffscreenDocument(offscreenSrc))) {
-          try {
-            await browser.offscreen.createDocument({
-              url: browser.runtime.getURL(offscreenSrc),
-              reasons: ["CLIPBOARD"],
-              justification: "Copy an image to clipboard for user",
-            });
-          } catch (err) {
-            // Fall back to DOM_SCRAPING if CLIPBOARD reason is not supported
-            try {
-              await browser.offscreen.createDocument({
-                url: browser.runtime.getURL(offscreenSrc),
-                reasons: ["DOM_SCRAPING"],
-                justification: "Copy an image to clipboard for user",
-              });
-            } catch (err2) {
-              console.error("Failed to create offscreen document:", err2);
-            }
-          }
-        }
-        await browser.runtime.sendMessage({
-          op: "copyToClipboard",
-          target: "offscreen",
-          src: dataurl,
-          type,
-        });
-      } else {
-        // Fallback to content script approach via port
-        const frameIds = info.frameId ? [info.frameId] : undefined;
-        await browser.scripting.executeScript({
-          target: { tabId: tab.id, frameIds },
-          files: ["src/offscreen/offscreen.js"],
-        });
-        const port = connectTab(tab, info.frameId);
-        port.postMessage({
-          op: "copyToClipboard",
-          target: "content",
-          src: dataurl,
-          type,
-        });
-      }
-    });
-  } catch (error) {
-    notify({ error: error.message || "Unknown error", srcUrl });
-  }
-}
-
 //
 // Event Listeners
 //
@@ -404,12 +329,6 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
     if (mediaType === "image" && srcUrl) {
       const type = menuItemId.replace("save_as_", "");
       processImageSave(srcUrl, type, tab, info);
-    } else {
-      notify(browser.i18n.getMessage("errorIsNotImage"));
-    }
-  } else if (menuItemId === "copy_to_clipboard") {
-    if (mediaType === "image" && srcUrl) {
-      processImageClipboard(srcUrl, "png", tab, info);
     } else {
       notify(browser.i18n.getMessage("errorIsNotImage"));
     }

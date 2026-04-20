@@ -12,8 +12,8 @@
     "description": "Extension description"
   },
   "Save_as": {
-    "message": "Save as $TYPE$",
-    "description": "Save as menu item",
+    "message": "Save image as $TYPE$",
+    "description": "Save as menu item (default-type single button)",
     "placeholders": {
       "type": {
         "content": "$1",
