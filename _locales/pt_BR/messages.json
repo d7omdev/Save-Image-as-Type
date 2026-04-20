@@ -6,27 +6,36 @@
     "message": "SalvarImagemComo"
   },
   "extDescription": {
-    "message": "Salve imagem como PNG, JPG ou WebP por menu de contexto na imagem."
+    "message": "Salve imagens como PNG, JPG ou WebP com um clique."
   },
   "Save_as": {
-    "message": "Salvar como $FORMAT$",
+    "message": "Salvar como $TYPE$",
     "placeholders": {
-      "format": {
+      "type": {
         "content": "$1",
-        "example": "PNG"
+        "example": "JPG"
       }
     }
   },
+  "Save_image_as": {
+    "message": "Salvar imagem como tipo",
+  },
+  "Options": {
+    "message": "Opções",
+  },
   "View_in_store": {
-    "message": "Ver na loja"
+    "message": "Ver na loja",
   },
   "errorIsNotImage": {
-    "message": "Não é uma imagem"
+    "message": "Não é uma imagem",
   },
   "errorOnSaving": {
-    "message": "Ocorreu um erro ao salvar imagem"
+    "message": "Ocorreu um erro ao salvar imagem",
   },
   "errorOnLoading": {
-    "message": "Ocorreu um erro ao carregar imagem"
+    "message": "Ocorreu um erro ao carregar imagem",
+  },
+  "errorIsNotImage": {
+    "message": "O elemento selecionado não é uma imagem",
   }
 }
