@@ -30,8 +30,7 @@
     "contextMenus",
     "activeTab",
     "scripting",
-    "storage",
-    "offscreen"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"

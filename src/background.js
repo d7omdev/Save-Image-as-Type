@@ -203,25 +203,28 @@ function loadMessages() {
   return messages;
 }
 
-async function hasOffscreenDocument(path) {
-  try {
-    const offscreenUrl = browser.runtime.getURL(path);
-    const matchedClients = await clients.matchAll();
-    return matchedClients.some((client) => client.url === offscreenUrl);
-  } catch (err) {
-    return false;
-  }
-}
-
-// Helper: Connect to tab for fallback messaging
-function connectTab(tab, frameId) {
-  return browser.tabs.connect(tab.id, { name: "convertType", frameId });
+// Convert image to the requested type using an in-memory canvas (Event Page
+// has full DOM access so we don't need an offscreen document).
+function convertImage(dataurl, type) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      const mimeType = "image/" + (type === "jpg" ? "jpeg" : type);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL(mimeType));
+    };
+    img.onerror = () => reject(new Error("errorOnLoading"));
+    img.src = dataurl;
+  });
 }
 
 async function processImageSave(srcUrl, type, tab, info) {
   const filename = getSuggestedFilename(srcUrl, type);
   loadMessages();
-  // Determine if no conversion is needed (already in the desired format)
   const noChange = srcUrl.startsWith(
     `data:image/${type === "jpg" ? "jpeg" : type};`,
   );
@@ -236,39 +239,11 @@ async function processImageSave(srcUrl, type, tab, info) {
         download(dataurl, filename);
         return;
       }
-
-      // Use Offscreen API if available
-      if (browser.offscreen && browser.offscreen.createDocument) {
-        const offscreenSrc = "src/offscreen/offscreen.html";
-        if (!(await hasOffscreenDocument(offscreenSrc))) {
-          await browser.offscreen.createDocument({
-            url: browser.runtime.getURL(offscreenSrc),
-            reasons: ["DOM_SCRAPING"],
-            justification: "Download an image for user",
-          });
-        }
-        await browser.runtime.sendMessage({
-          op: "convertType",
-          target: "offscreen",
-          src: dataurl,
-          type,
-          filename,
-        });
-      } else {
-        // Fallback to content script approach via port
-        const frameIds = info.frameId ? [info.frameId] : undefined;
-        await browser.scripting.executeScript({
-          target: { tabId: tab.id, frameIds },
-          files: ["src/offscreen/offscreen.js"],
-        });
-        const port = connectTab(tab, info.frameId);
-        port.postMessage({
-          op: "convertType",
-          target: "content",
-          src: dataurl,
-          type,
-          filename,
-        });
+      try {
+        const converted = await convertImage(dataurl, type);
+        download(converted, filename);
+      } catch (err) {
+        notify({ error: err.message || "Conversion failed", srcUrl });
       }
     });
   } catch (error) {
