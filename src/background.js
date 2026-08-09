@@ -1,317 +1,329 @@
 let messages;
 let userPreferences = {
-  defaultType: "",
-  defaultLocation: "",
-  showStoreButton: false,
+	defaultType: "",
+	saveSilently: false,
+	showStoreButton: false,
 };
 
 if (!browser.i18n?.getMessage) {
-  browser.i18n = browser.i18n || {};
-  browser.i18n.getMessage = (key, args) => {
-    const messages = {
-      View_in_store: "View in store",
-      Save_as: args?.[0] ? `Save as ${args[0]}` : key,
-      Save_image_as: "Save image as type",
-      Options: "Options",
-      errorOnSaving: "Error on saving",
-      errorIsNotImage: "Selected item is not an image",
-      errorOnLoading: "Error loading image",
-    };
-    return messages[key] || key;
-  };
+	browser.i18n = browser.i18n || {};
+	browser.i18n.getMessage = (key, args) => {
+		const messages = {
+			View_in_store: "View in store",
+			Save_as: args?.[0] ? `Save as ${args[0]}` : key,
+			Save_image_as: "Save image as type",
+			Options: "Options",
+			errorOnSaving: "Error on saving",
+			errorIsNotImage: "Selected item is not an image",
+			errorOnLoading: "Error loading image",
+		};
+		return messages[key] || key;
+	};
 }
 
 function loadUserPreferences() {
-  return browser.storage.sync
-    .get({ defaultType: "", showStoreButton: false })
-    .then((items) => {
-      userPreferences = items;
-      updateContextMenus();
-    });
+	return browser.storage.sync
+		.get({ defaultType: "", saveSilently: false, showStoreButton: false })
+		.then((items) => {
+			userPreferences = items;
+			updateContextMenus();
+		});
 }
 
 function updateContextMenus() {
-  browser.contextMenus.removeAll().then(() => {
-    if (userPreferences.defaultType) {
-      // Single root-level button — no separator, no Options entry, so Firefox
-      // renders it inline instead of auto-collapsing into a submenu.
-      const defaultTypeUpper = userPreferences.defaultType.toUpperCase();
-      browser.contextMenus.create({
-        id: "save_as_default",
-        title: browser.i18n.getMessage("Save_as", [defaultTypeUpper]),
-        contexts: ["image"],
-        type: "normal",
-      });
-      return;
-    }
+	browser.contextMenus.removeAll().then(() => {
+		if (userPreferences.defaultType) {
+			// Single root-level button — no separator, no Options entry, so Firefox
+			// renders it inline instead of auto-collapsing into a submenu.
+			const defaultTypeUpper = userPreferences.defaultType.toUpperCase();
+			browser.contextMenus.create({
+				id: "save_as_default",
+				title: browser.i18n.getMessage("Save_as", [defaultTypeUpper]),
+				contexts: ["image"],
+				type: "normal",
+			});
+			return;
+		}
 
-    ["JPG", "PNG", "WebP"].forEach((type) => {
-      browser.contextMenus.create({
-        id: `save_as_${type.toLowerCase()}`,
-        title: type.toUpperCase(),
-        contexts: ["image"],
-        type: "normal",
-      });
-    });
+		["JPG", "PNG", "WebP"].forEach((type) => {
+			browser.contextMenus.create({
+				id: `save_as_${type.toLowerCase()}`,
+				title: type.toUpperCase(),
+				contexts: ["image"],
+				type: "normal",
+			});
+		});
 
-    browser.contextMenus.create({
-      id: "sep_options",
-      type: "separator",
-      contexts: ["image"],
-    });
+		browser.contextMenus.create({
+			id: "sep_options",
+			type: "separator",
+			contexts: ["image"],
+		});
 
-    browser.contextMenus.create({
-      id: "open_options",
-      title: browser.i18n.getMessage("Options"),
-      contexts: ["image"],
-      type: "normal",
-    });
+		browser.contextMenus.create({
+			id: "open_options",
+			title: browser.i18n.getMessage("Options"),
+			contexts: ["image"],
+			type: "normal",
+		});
 
-    if (userPreferences.showStoreButton) {
-      browser.contextMenus.create({
-        id: "view_in_store",
-        title: browser.i18n.getMessage("View_in_store"),
-        contexts: ["image"],
-        type: "normal",
-      });
-    }
-  });
+		if (userPreferences.showStoreButton) {
+			browser.contextMenus.create({
+				id: "view_in_store",
+				title: browser.i18n.getMessage("View_in_store"),
+				contexts: ["image"],
+				type: "normal",
+			});
+		}
+	});
 }
 
 // Helper: Convert a data URL to a Blob
 function dataURLtoBlob(dataurl) {
-  const arr = dataurl.split(",");
-  const mimeMatch = arr[0].match(/:(.*?);/);
-  if (!mimeMatch) {
-    throw new Error("Invalid data URL");
-  }
-  const mime = mimeMatch[1];
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new Blob([u8arr], { type: mime });
+	const arr = dataurl.split(",");
+	const mimeMatch = arr[0].match(/:(.*?);/);
+	if (!mimeMatch) {
+		throw new Error("Invalid data URL");
+	}
+	const mime = mimeMatch[1];
+	const bstr = atob(arr[1]);
+	let n = bstr.length;
+	const u8arr = new Uint8Array(n);
+	while (n--) {
+		u8arr[n] = bstr.charCodeAt(n);
+	}
+	return new Blob([u8arr], { type: mime });
+}
+
+function shouldPromptForSave() {
+	return !userPreferences.saveSilently;
 }
 
 function download(url, filename) {
-  if (url.startsWith("data:")) {
-    try {
-      const blob = dataURLtoBlob(url);
-      const blobUrl = URL.createObjectURL(blob);
-      browser.downloads.download(
-        { url: blobUrl, filename, saveAs: true },
-        (downloadId) => {
-          if (!downloadId) {
-            let msg = browser.i18n.getMessage("errorOnSaving");
-            if (browser.runtime.lastError) {
-              msg += `: \n${browser.runtime.lastError.message}`;
-            }
-            notify(msg);
-          }
-          // Clean up blob URL after download
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-        },
-      );
-    } catch (error) {
-      notify(error);
-    }
-  } else {
-    browser.downloads.download(
-      { url, filename, saveAs: true },
-      (downloadId) => {
-        if (!downloadId) {
-          let msg = browser.i18n.getMessage("errorOnSaving");
-          if (browser.runtime.lastError) {
-            msg += `: \n${browser.runtime.lastError.message}`;
-          }
-          notify(msg);
-        }
-      },
-    );
-  }
+	if (url.startsWith("data:")) {
+		try {
+			const blob = dataURLtoBlob(url);
+			const blobUrl = URL.createObjectURL(blob);
+			browser.downloads.download(
+				{ url: blobUrl, filename, saveAs: shouldPromptForSave() },
+				(downloadId) => {
+					if (!downloadId) {
+						let msg = browser.i18n.getMessage("errorOnSaving");
+						if (browser.runtime.lastError) {
+							msg += `: \n${browser.runtime.lastError.message}`;
+						}
+						notify(msg);
+					}
+					// Clean up blob URL after download
+					setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+				},
+			);
+		} catch (error) {
+			notify(error);
+		}
+	} else {
+		browser.downloads.download(
+			{ url, filename, saveAs: shouldPromptForSave() },
+			(downloadId) => {
+				if (!downloadId) {
+					let msg = browser.i18n.getMessage("errorOnSaving");
+					if (browser.runtime.lastError) {
+						msg += `: \n${browser.runtime.lastError.message}`;
+					}
+					notify(msg);
+				}
+			},
+		);
+	}
 }
 
 async function fetchAsDataURL(src, callback) {
-  if (src.startsWith("data:")) {
-    callback(null, src);
-    return;
-  }
-  try {
-    const res = await fetch(src);
-    const blob = await res.blob();
-    if (!blob.size) throw "Fetch failed of 0 size";
-    // Use arrayBuffer instead of FileReader — FileReader is not available in
-    // Firefox MV3 service workers, causing silent failures in the original code.
-    const buffer = await blob.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-    }
-    const dataurl = `data:${blob.type};base64,${btoa(binary)}`;
-    callback(null, dataurl);
-  } catch (error) {
-    console.error("Fetch error:", error);
-    callback(error.message || String(error));
-  }
+	if (src.startsWith("data:")) {
+		callback(null, src);
+		return;
+	}
+	try {
+		const res = await fetch(src);
+		const blob = await res.blob();
+		if (!blob.size) throw new Error("Fetch failed of 0 size");
+		// Use arrayBuffer instead of FileReader — FileReader is not available in
+		// Firefox MV3 service workers, causing silent failures in the original code.
+		const buffer = await blob.arrayBuffer();
+		const bytes = new Uint8Array(buffer);
+		let binary = "";
+		const chunkSize = 8192;
+		for (let i = 0; i < bytes.length; i += chunkSize) {
+			binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+		}
+		const dataurl = `data:${blob.type};base64,${btoa(binary)}`;
+		callback(null, dataurl);
+	} catch (error) {
+		console.error("Fetch error:", error);
+		callback(error.message || String(error));
+	}
 }
 
 function getSuggestedFilename(src, type) {
-  if (/googleusercontent\.com\/[0-9a-zA-Z]{30,}/.test(src))
-    return `screenshot.${type}`;
-  if (src.startsWith("blob:") || src.startsWith("data:"))
-    return `Untitled.${type}`;
-  let filename = decodeURIComponent(
-    src
-      .replace(/[?#].*/, "")
-      .split("/")
-      .pop()
-      .replace(/\+/g, " "),
-  );
-  filename = filename
-    .replace(/[^\w\-\.\,@ ]+/g, "")
-    .replace(/\s\s+/g, " ")
-    .trim();
-  filename = filename.replace(/\.(jpe?g|png|gif|webp|svg)$/gi, "").trim();
-  if (filename.length > 32) filename = filename.substring(0, 32);
-  filename = filename.replace(/[^0-9a-z]+$/i, "").trim();
-  return (filename || "image") + `.${type}`;
+	if (/googleusercontent\.com\/[0-9a-zA-Z]{30,}/.test(src))
+		return `screenshot.${type}`;
+	if (src.startsWith("blob:") || src.startsWith("data:"))
+		return `Untitled.${type}`;
+	let filename = decodeURIComponent(
+		src
+			.replace(/[?#].*/, "")
+			.split("/")
+			.pop()
+			.replace(/\+/g, " "),
+	);
+	filename = filename
+		.replace(/[^\w\-.,@ ]+/g, "")
+		.replace(/\s\s+/g, " ")
+		.trim();
+	filename = filename.replace(/\.(jpe?g|png|gif|webp|svg)$/gi, "").trim();
+	if (filename.length > 32) filename = filename.substring(0, 32);
+	filename = filename.replace(/[^0-9a-z]+$/i, "").trim();
+	return (filename || "image") + `.${type}`;
 }
 
 function notify(msg) {
-  let displayMsg = msg;
-  if (typeof msg === 'object' && msg !== null) {
-    if (msg.error) {
-      displayMsg = `${browser.i18n.getMessage(msg.error) || msg.error}\n${msg.srcUrl || msg.src}`;
-    } else {
-      displayMsg = JSON.stringify(msg);
-    }
-  }
-  console.log(displayMsg);
+	let displayMsg = msg;
+	if (typeof msg === "object" && msg !== null) {
+		if (msg.error) {
+			displayMsg = `${browser.i18n.getMessage(msg.error) || msg.error}\n${msg.srcUrl || msg.src}`;
+		} else {
+			displayMsg = JSON.stringify(msg);
+		}
+	}
+	console.log(displayMsg);
 }
 
 function loadMessages() {
-  if (!messages) {
-    messages = {};
-    ["errorOnSaving", "errorOnLoading", "errorIsNotImage"].forEach((key) => {
-      messages[key] = browser.i18n.getMessage(key);
-    });
-  }
-  return messages;
+	if (!messages) {
+		messages = {};
+		["errorOnSaving", "errorOnLoading", "errorIsNotImage"].forEach((key) => {
+			messages[key] = browser.i18n.getMessage(key);
+		});
+	}
+	return messages;
 }
 
 // Convert image to the requested type using an in-memory canvas (Event Page
 // has full DOM access so we don't need an offscreen document).
 function convertImage(dataurl, type) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      const mimeType = "image/" + (type === "jpg" ? "jpeg" : type);
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL(mimeType));
-    };
-    img.onerror = () => reject(new Error("errorOnLoading"));
-    img.src = dataurl;
-  });
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+		img.onload = () => {
+			const canvas = document.createElement("canvas");
+			canvas.width = img.width;
+			canvas.height = img.height;
+			const ctx = canvas.getContext("2d");
+			const mimeType = "image/" + (type === "jpg" ? "jpeg" : type);
+			ctx.drawImage(img, 0, 0);
+			resolve(canvas.toDataURL(mimeType));
+		};
+		img.onerror = () => reject(new Error("errorOnLoading"));
+		img.src = dataurl;
+	});
 }
 
-async function processImageSave(srcUrl, type, tab, info) {
-  const filename = getSuggestedFilename(srcUrl, type);
-  loadMessages();
-  const noChange = srcUrl.startsWith(
-    `data:image/${type === "jpg" ? "jpeg" : type};`,
-  );
+async function processImageSave(srcUrl, type) {
+	const filename = getSuggestedFilename(srcUrl, type);
+	loadMessages();
+	const noChange = srcUrl.startsWith(
+		`data:image/${type === "jpg" ? "jpeg" : type};`,
+	);
 
-  try {
-    fetchAsDataURL(srcUrl, async (error, dataurl) => {
-      if (error) {
-        notify({ error, srcUrl });
-        return;
-      }
-      if (noChange) {
-        download(dataurl, filename);
-        return;
-      }
-      try {
-        const converted = await convertImage(dataurl, type);
-        download(converted, filename);
-      } catch (err) {
-        notify({ error: err.message || "Conversion failed", srcUrl });
-      }
-    });
-  } catch (error) {
-    notify({ error: error.message || "Unknown error", srcUrl });
-  }
+	try {
+		fetchAsDataURL(srcUrl, async (error, dataurl) => {
+			if (error) {
+				notify({ error, srcUrl });
+				return;
+			}
+			if (noChange) {
+				download(dataurl, filename);
+				return;
+			}
+			try {
+				const converted = await convertImage(dataurl, type);
+				download(converted, filename);
+			} catch (err) {
+				notify({ error: err.message || "Conversion failed", srcUrl });
+			}
+		});
+	} catch (error) {
+		notify({ error: error.message || "Unknown error", srcUrl });
+	}
 }
+
+// Event pages can be recreated between downloads, so preferences must be
+// restored whenever the background script starts, not only after installation.
+loadMessages();
+loadUserPreferences();
 
 //
 // Event Listeners
 //
 
 browser.runtime.onInstalled.addListener(() => {
-  loadMessages();
-  loadUserPreferences();
+	loadMessages();
+	loadUserPreferences();
 });
 
 browser.storage.onChanged.addListener((changes, area) => {
-  if (area === "sync") {
-    if (changes.defaultType) {
-      userPreferences.defaultType = changes.defaultType.newValue;
-    }
-    if (changes.showStoreButton) {
-      userPreferences.showStoreButton = changes.showStoreButton.newValue;
-    }
-    updateContextMenus();
-  }
+	if (area === "sync") {
+		if (changes.defaultType) {
+			userPreferences.defaultType = changes.defaultType.newValue;
+		}
+		if (changes.saveSilently) {
+			userPreferences.saveSilently = changes.saveSilently.newValue;
+		}
+		if (changes.showStoreButton) {
+			userPreferences.showStoreButton = changes.showStoreButton.newValue;
+		}
+		updateContextMenus();
+	}
 });
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const { target, op } = message || {};
-  if (target === "background" && op) {
-    if (op === "download") {
-      const { url, filename } = message;
-      download(url, filename);
-    } else if (op === "notify") {
-      const msg = message.message;
-      if (msg && msg.error) {
-        let msg2 = browser.i18n.getMessage(msg.error) || msg.error;
-        if (msg.src) msg2 += `\n${msg.src}`;
-        notify(msg2);
-      } else {
-        notify(message);
-      }
-    } else {
-      console.warn(`unknown op: ${op}`);
-    }
-  }
+browser.runtime.onMessage.addListener((message) => {
+	const { target, op } = message || {};
+	if (target === "background" && op) {
+		if (op === "download") {
+			const { url, filename } = message;
+			download(url, filename);
+		} else if (op === "notify") {
+			const msg = message.message;
+			if (msg && msg.error) {
+				let msg2 = browser.i18n.getMessage(msg.error) || msg.error;
+				if (msg.src) msg2 += `\n${msg.src}`;
+				notify(msg2);
+			} else {
+				notify(message);
+			}
+		} else {
+			console.warn(`unknown op: ${op}`);
+		}
+	}
 });
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
-  const { menuItemId, mediaType, srcUrl } = info;
-  if (menuItemId === "open_options") {
-    browser.runtime.openOptionsPage();
-  } else if (menuItemId === "save_as_default") {
-    if (mediaType === "image" && srcUrl) {
-      processImageSave(srcUrl, userPreferences.defaultType, tab, info);
-    } else {
-      notify(browser.i18n.getMessage("errorIsNotImage"));
-    }
-  } else if (menuItemId.startsWith("save_as_")) {
-    if (mediaType === "image" && srcUrl) {
-      const type = menuItemId.replace("save_as_", "");
-      processImageSave(srcUrl, type, tab, info);
-    } else {
-      notify(browser.i18n.getMessage("errorIsNotImage"));
-    }
-  } else if (menuItemId === "view_in_store") {
-    const url = `https://addons.mozilla.org/firefox/addon/siat/`;
-    browser.tabs.create({ url, index: tab.index + 1 });
-  }
+	const { menuItemId, mediaType, srcUrl } = info;
+	if (menuItemId === "open_options") {
+		browser.runtime.openOptionsPage();
+	} else if (menuItemId === "save_as_default") {
+		if (mediaType === "image" && srcUrl) {
+			processImageSave(srcUrl, userPreferences.defaultType);
+		} else {
+			notify(browser.i18n.getMessage("errorIsNotImage"));
+		}
+	} else if (menuItemId.startsWith("save_as_")) {
+		if (mediaType === "image" && srcUrl) {
+			const type = menuItemId.replace("save_as_", "");
+			processImageSave(srcUrl, type);
+		} else {
+			notify(browser.i18n.getMessage("errorIsNotImage"));
+		}
+	} else if (menuItemId === "view_in_store") {
+		const url = `https://addons.mozilla.org/firefox/addon/siat/`;
+		browser.tabs.create({ url, index: tab.index + 1 });
+	}
 });
