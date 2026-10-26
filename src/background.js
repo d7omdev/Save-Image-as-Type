@@ -148,7 +148,12 @@ async function fetchAsDataURL(src, callback) {
 		return;
 	}
 	try {
+		const parsed = new URL(src);
+		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+			throw new Error("Unsupported URL scheme");
+		}
 		const res = await fetch(src);
+		if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`);
 		const blob = await res.blob();
 		if (!blob.size) throw new Error("Fetch failed of 0 size");
 		// Use arrayBuffer instead of FileReader — FileReader is not available in
