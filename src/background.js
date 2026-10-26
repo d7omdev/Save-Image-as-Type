@@ -45,7 +45,7 @@ function updateContextMenus() {
 			return;
 		}
 
-		["JPG", "PNG", "WebP"].forEach((type) => {
+		["JPG", "PNG", "WebP", "GIF"].forEach((type) => {
 			browser.contextMenus.create({
 				id: `save_as_${type.toLowerCase()}`,
 				title: type.toUpperCase(),
@@ -219,39 +219,59 @@ function convertImage(dataurl, type) {
 			const ctx = canvas.getContext("2d");
 			const mimeType = "image/" + (type === "jpg" ? "jpeg" : type);
 			ctx.drawImage(img, 0, 0);
-			resolve(canvas.toDataURL(mimeType));
+			const out = canvas.toDataURL(mimeType);
+			if (!out.startsWith(`data:${mimeType}`)) {
+				console.warn(`Can't encode as .${type}`)
+			}
+			resolve(out);
 		};
 		img.onerror = () => reject(new Error("errorOnLoading"));
 		img.src = dataurl;
 	});
 }
 
+function sniffImageType(dataurl) {
+	const comma = dataurl.indexOf(",");
+	if (comma === -1 || !dataurl.slice(0, comma).includes(";base64")) return null;
+	let bytes;
+	try {
+		bytes = atob(dataurl.slice(comma + 1, comma + 17));
+	} catch {
+		return null;
+	}
+	if (bytes.startsWith("\x89PNG\r\n\x1a\n")) return "png";
+	if (bytes.startsWith("GIF87a") || bytes.startsWith("GIF89a")) return "gif";
+	if (bytes.startsWith("RIFF") && bytes.slice(8, 12) === "WEBP") return "webp";
+	if (bytes.startsWith("\xFF\xD8\xFF")) return "jpg";
+	return null;
+}
+
 async function processImageSave(srcUrl, type) {
 	const filename = getSuggestedFilename(srcUrl, type);
 	loadMessages();
-	const noChange = srcUrl.startsWith(
-		`data:image/${type === "jpg" ? "jpeg" : type};`,
-	);
-
 	try {
 		fetchAsDataURL(srcUrl, async (error, dataurl) => {
 			if (error) {
-				notify({ error, srcUrl });
+				notify({ error, srcUrl})
 				return;
 			}
-			if (noChange) {
+			const sniffed = sniffImageType(dataurl);
+			const targetMimeType = type === "jpg" ? "jpeg" : type;
+			const noChange = sniffed ? sniffed === type :
+				dataurl.startsWith(`data:image/${targetMimeType};`) || (type === "png" && dataurl.startsWith("data:image/apng;"));
+			if (noChange){ 
 				download(dataurl, filename);
 				return;
 			}
 			try {
 				const converted = await convertImage(dataurl, type);
 				download(converted, filename);
-			} catch (err) {
-				notify({ error: err.message || "Conversion failed", srcUrl });
+			} catch (err){
+				notify({ error: err.message || "Conversion failed", srcUrl});
 			}
 		});
-	} catch (error) {
-		notify({ error: error.message || "Unknown error", srcUrl });
+	} catch (error){
+		notify({ error: error.message || "Unknown error", srcUrl});
 	}
 }
 
