@@ -27,6 +27,7 @@
   },
   "permissions": [
     "downloads",
+    "notifications",
     "contextMenus",
     "activeTab",
     "scripting",
