@@ -6,7 +6,7 @@
     "start": "web-ext run --devtools",
     "build": "web-ext build",
     "lint": "web-ext lint",
-    "test": "web-ext run --pref extensions.experiments.enabled=true",
+    "test": "web-ext run --pref extensions.experiments.enabled=true --start-url 'about:debugging#/runtime/this-firefox'",
     "clean": "rm -rf web-ext-artifacts/",
     "prepare": "npm run clean && npm run build",
     "sign": "web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET",
