@@ -1,6 +1,6 @@
 {
   "name": "save-image-as-type",
-  "version": "20.2.0",
+  "version": "20.3.0",
   "description": "A Firefox extension to save images in your preferred format.",
   "scripts": {
     "start": "web-ext run --devtools",
