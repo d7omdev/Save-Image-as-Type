@@ -4,7 +4,7 @@
   "description": "A Firefox extension to save images in your preferred format.",
   "scripts": {
     "start": "web-ext run --devtools",
-    "build": "web-ext build",
+    "build": "web-ext build --overwrite-dest --ignore-files 'tests/**' 'test-results/**' '*.md' bun.lock",
     "lint": "web-ext lint",
     "test": "web-ext run --pref extensions.experiments.enabled=true --start-url 'about:debugging#/runtime/this-firefox'",
     "clean": "rm -rf web-ext-artifacts/",
