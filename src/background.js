@@ -54,6 +54,15 @@ function updateContextMenus() {
 			});
 		});
 
+		// Canvas can't encode GIF, so onShown only reveals this for GIF sources.
+		browser.contextMenus.create({
+			id: "save_as_gif",
+			title: "GIF",
+			contexts: ["image"],
+			visible: false,
+			type: "normal",
+		});
+
 		browser.contextMenus.create({
 			id: "sep_options",
 			type: "separator",
@@ -99,6 +108,16 @@ function shouldPromptForSave() {
 	return !userPreferences.saveSilently;
 }
 
+function reportDownloadFailure(downloadId) {
+	if (downloadId) return;
+	const reason = browser.runtime.lastError?.message;
+	// Closing the Save As dialog is reported as an error; it isn't one.
+	if (reason && /cancel/i.test(reason)) return;
+	let msg = browser.i18n.getMessage("errorOnSaving");
+	if (reason) msg += `: \n${reason}`;
+	notify(msg);
+}
+
 function download(url, filename) {
 	if (url.startsWith("data:")) {
 		try {
@@ -107,13 +126,7 @@ function download(url, filename) {
 			browser.downloads.download(
 				{ url: blobUrl, filename, saveAs: shouldPromptForSave() },
 				(downloadId) => {
-					if (!downloadId) {
-						let msg = browser.i18n.getMessage("errorOnSaving");
-						if (browser.runtime.lastError) {
-							msg += `: \n${browser.runtime.lastError.message}`;
-						}
-						notify(msg);
-					}
+					reportDownloadFailure(downloadId);
 					// Clean up blob URL after download
 					setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 				},
@@ -124,15 +137,7 @@ function download(url, filename) {
 	} else {
 		browser.downloads.download(
 			{ url, filename, saveAs: shouldPromptForSave() },
-			(downloadId) => {
-				if (!downloadId) {
-					let msg = browser.i18n.getMessage("errorOnSaving");
-					if (browser.runtime.lastError) {
-						msg += `: \n${browser.runtime.lastError.message}`;
-					}
-					notify(msg);
-				}
-			},
+			reportDownloadFailure,
 		);
 	}
 }
@@ -191,10 +196,16 @@ function notify(msg) {
 		if (msg.error) {
 			displayMsg = `${browser.i18n.getMessage(msg.error) || msg.error}\n${msg.srcUrl || msg.src}`;
 		} else {
-			displayMsg = JSON.stringify(msg);
+			displayMsg = msg.message || JSON.stringify(msg);
 		}
 	}
 	console.log(displayMsg);
+	browser.notifications.create({
+		type: "basic",
+		iconUrl: browser.runtime.getURL("assets/icons/icon-48.svg"),
+		title: browser.i18n.getMessage("extName"),
+		message: String(displayMsg),
+	});
 }
 
 function loadMessages() {
@@ -219,26 +230,50 @@ function convertImage(dataurl, type) {
 			const ctx = canvas.getContext("2d");
 			const mimeType = "image/" + (type === "jpg" ? "jpeg" : type);
 			ctx.drawImage(img, 0, 0);
-			resolve(canvas.toDataURL(mimeType));
+			const out = canvas.toDataURL(mimeType);
+			// Canvas silently falls back to PNG for types it can't encode (e.g. GIF).
+			if (!out.startsWith(`data:${mimeType}`)) {
+				reject(new Error(`Can't encode as ${type.toUpperCase()}`));
+				return;
+			}
+			resolve(out);
 		};
 		img.onerror = () => reject(new Error("errorOnLoading"));
 		img.src = dataurl;
 	});
 }
 
+function sniffImageType(dataurl) {
+	const comma = dataurl.indexOf(",");
+	if (comma === -1 || !dataurl.slice(0, comma).includes(";base64")) return null;
+	let bytes;
+	try {
+		bytes = atob(dataurl.slice(comma + 1, comma + 17));
+	} catch {
+		return null;
+	}
+	if (bytes.startsWith("\x89PNG\r\n\x1a\n")) return "png";
+	if (bytes.startsWith("GIF87a") || bytes.startsWith("GIF89a")) return "gif";
+	if (bytes.startsWith("RIFF") && bytes.slice(8, 12) === "WEBP") return "webp";
+	if (bytes.startsWith("\xFF\xD8\xFF")) return "jpg";
+	return null;
+}
+
 async function processImageSave(srcUrl, type) {
 	const filename = getSuggestedFilename(srcUrl, type);
 	loadMessages();
-	const noChange = srcUrl.startsWith(
-		`data:image/${type === "jpg" ? "jpeg" : type};`,
-	);
-
 	try {
 		fetchAsDataURL(srcUrl, async (error, dataurl) => {
 			if (error) {
 				notify({ error, srcUrl });
 				return;
 			}
+			const sniffed = sniffImageType(dataurl);
+			const targetMimeType = type === "jpg" ? "jpeg" : type;
+			const noChange = sniffed
+				? sniffed === type
+				: dataurl.startsWith(`data:image/${targetMimeType};`) ||
+					(type === "png" && dataurl.startsWith("data:image/apng;"));
 			if (noChange) {
 				download(dataurl, filename);
 				return;
@@ -303,6 +338,15 @@ browser.runtime.onMessage.addListener((message) => {
 			console.warn(`unknown op: ${op}`);
 		}
 	}
+});
+
+// URL-based: a GIF served from a URL without .gif won't get the item.
+browser.contextMenus.onShown.addListener((info) => {
+	if (userPreferences.defaultType || !info.contexts.includes("image")) return;
+	const isGif = /^data:image\/gif[;,]|\.gif([?#]|$)/i.test(info.srcUrl || "");
+	browser.contextMenus
+		.update("save_as_gif", { visible: isGif })
+		.then(() => browser.contextMenus.refresh());
 });
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
