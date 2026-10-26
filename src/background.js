@@ -108,6 +108,16 @@ function shouldPromptForSave() {
 	return !userPreferences.saveSilently;
 }
 
+function reportDownloadFailure(downloadId) {
+	if (downloadId) return;
+	const reason = browser.runtime.lastError?.message;
+	// Closing the Save As dialog is reported as an error; it isn't one.
+	if (reason && /cancel/i.test(reason)) return;
+	let msg = browser.i18n.getMessage("errorOnSaving");
+	if (reason) msg += `: \n${reason}`;
+	notify(msg);
+}
+
 function download(url, filename) {
 	if (url.startsWith("data:")) {
 		try {
@@ -116,13 +126,7 @@ function download(url, filename) {
 			browser.downloads.download(
 				{ url: blobUrl, filename, saveAs: shouldPromptForSave() },
 				(downloadId) => {
-					if (!downloadId) {
-						let msg = browser.i18n.getMessage("errorOnSaving");
-						if (browser.runtime.lastError) {
-							msg += `: \n${browser.runtime.lastError.message}`;
-						}
-						notify(msg);
-					}
+					reportDownloadFailure(downloadId);
 					// Clean up blob URL after download
 					setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 				},
@@ -133,15 +137,7 @@ function download(url, filename) {
 	} else {
 		browser.downloads.download(
 			{ url, filename, saveAs: shouldPromptForSave() },
-			(downloadId) => {
-				if (!downloadId) {
-					let msg = browser.i18n.getMessage("errorOnSaving");
-					if (browser.runtime.lastError) {
-						msg += `: \n${browser.runtime.lastError.message}`;
-					}
-					notify(msg);
-				}
-			},
+			reportDownloadFailure,
 		);
 	}
 }
